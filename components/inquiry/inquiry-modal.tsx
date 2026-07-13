@@ -9,6 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EnquiryForm } from "@/components/forms/enquiry-form";
+import type { Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 
 type InquiryContextValue = { open: () => void; close: () => void };
 
@@ -20,7 +22,15 @@ export function useInquiryModal() {
   return ctx;
 }
 
-export function InquiryProvider({ children }: { children: React.ReactNode }) {
+export function InquiryProvider({
+  children,
+  lang,
+  dict,
+}: {
+  children: React.ReactNode;
+  lang: Locale;
+  dict: Dictionary;
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   const value = useMemo<InquiryContextValue>(
@@ -37,16 +47,16 @@ export function InquiryProvider({ children }: { children: React.ReactNode }) {
     <InquiryContext.Provider value={value}>
       {children}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[90vh] max-w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Quick Inquiry</DialogTitle>
-            <DialogDescription>
-              Send us your requirement and our team will get back to you shortly.
-            </DialogDescription>
+            <DialogTitle className="text-xl sm:text-2xl">{dict.inquiryModal.title}</DialogTitle>
+            <DialogDescription>{dict.inquiryModal.description}</DialogDescription>
           </DialogHeader>
           <EnquiryForm
+            lang={lang}
+            dict={dict}
             source="quick-inquiry"
-            submitLabel="Request Now"
+            submitLabel={dict.common.requestNow}
             onSuccess={handleSuccess}
           />
         </DialogContent>

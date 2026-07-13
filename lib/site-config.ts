@@ -5,8 +5,8 @@
  */
 
 export const siteConfig = {
-  name: "Jageshwar Steel and Agriculture",
-  legalName: "Jageshwar Steel and Agriculture",
+  name: "Jageshwar Welding and Agriculture",
+  legalName: "Jageshwar Welding and Agriculture",
   tagline: "Partner for Successful Farming",
   description:
     "AgriMech Industries manufactures reliable, technology-driven tractor-mounted agricultural equipment. Over four decades of quality engineering trusted by farmers and dealers across the country.",

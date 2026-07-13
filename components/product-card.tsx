@@ -2,14 +2,16 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { PlaceholderImage } from "@/components/placeholder-image";
 import type { Product } from "@/lib/data";
+import type { Locale } from "@/lib/i18n/config";
+import { localePath } from "@/lib/i18n/routing";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({ product, lang }: { product: Product; lang: Locale }) {
   return (
     <Link
-      href={`/products/${product.slug}`}
+      href={localePath(lang, `/products/${product.slug}`)}
       className="group relative flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-4/3 overflow-hidden">
         <PlaceholderImage
           hue={product.hue}
           className="size-full transition-transform duration-500 group-hover:scale-110"
@@ -24,9 +26,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.title}
           <ArrowUpRight className="size-5 shrink-0 text-muted-foreground transition-colors group-hover:text-brand" />
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          {product.excerpt}
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{product.excerpt}</p>
       </div>
     </Link>
   );

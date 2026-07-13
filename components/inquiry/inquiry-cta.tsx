@@ -9,11 +9,11 @@ import { useInquiryModal } from "@/components/inquiry/inquiry-modal";
  * Safe to drop into otherwise-server-rendered pages.
  */
 export function InquiryButton({
-  label = "Quick Inquiry",
+  label,
   size = "lg",
   variant = "outline",
 }: {
-  label?: string;
+  label: string;
   size?: "sm" | "lg" | "default";
   variant?: "default" | "outline" | "secondary";
 }) {

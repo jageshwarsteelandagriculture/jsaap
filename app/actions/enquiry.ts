@@ -1,6 +1,8 @@
 "use server";
 
-import { enquirySchema, type EnquiryState } from "@/lib/validations";
+import { createEnquirySchema, type EnquiryState } from "@/lib/validations";
+import { defaultLocale, hasLocale } from "@/lib/i18n/config";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
 /**
  * Handle an enquiry / quote request.
@@ -9,11 +11,18 @@ import { enquirySchema, type EnquiryState } from "@/lib/validations";
  * logs the enquiry. To persist, swap the `// TODO: persist` block for a
  * Mongoose `Enquiry.create(data)` call (and optionally an email/WhatsApp
  * notification). The function signature already matches `useActionState`.
+ *
+ * The form posts the visitor's locale so every message we send back — field
+ * errors included — is in the language they are reading the site in.
  */
 export async function submitEnquiry(
   _prevState: EnquiryState,
   formData: FormData,
 ): Promise<EnquiryState> {
+  const rawLang = String(formData.get("lang") ?? "");
+  const lang = hasLocale(rawLang) ? rawLang : defaultLocale;
+  const t = getDictionary(lang).form;
+
   const raw = {
     name: formData.get("name"),
     email: formData.get("email"),
@@ -21,9 +30,10 @@ export async function submitEnquiry(
     message: formData.get("message"),
     company: formData.get("company") ?? "",
     source: formData.get("source") ?? "quote-form",
+    lang,
   };
 
-  const parsed = enquirySchema.safeParse(raw);
+  const parsed = createEnquirySchema(t).safeParse(raw);
 
   if (!parsed.success) {
     const fieldErrors: EnquiryState["errors"] = {};
@@ -33,14 +43,14 @@ export async function submitEnquiry(
     }
     return {
       status: "error",
-      message: "Please correct the highlighted fields.",
+      message: t.correctFields,
       errors: fieldErrors,
     };
   }
 
   // Honeypot tripped — pretend success, drop silently.
   if (parsed.data.company) {
-    return { status: "success", message: "Thank you! We'll be in touch shortly." };
+    return { status: "success", message: t.thankYou };
   }
 
   try {
@@ -54,18 +64,13 @@ export async function submitEnquiry(
       phone: parsed.data.phone,
       message: parsed.data.message,
       source: parsed.data.source,
+      lang: parsed.data.lang,
     };
     console.info("[enquiry] received", enquiry);
 
-    return {
-      status: "success",
-      message: "Thank you! Your enquiry has been received — our team will contact you shortly.",
-    };
+    return { status: "success", message: t.successMessage };
   } catch (error) {
     console.error("[enquiry] failed to process", error);
-    return {
-      status: "error",
-      message: "Something went wrong while sending your enquiry. Please try again or call us.",
-    };
+    return { status: "error", message: t.errorMessage };
   }
 }

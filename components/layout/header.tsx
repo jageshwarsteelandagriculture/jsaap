@@ -7,10 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/brand/logo";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { SearchDialog } from "@/components/layout/search-dialog";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { useInquiryModal } from "@/components/inquiry/inquiry-modal";
 import { Facebook, Linkedin, Youtube } from "@/components/brand/social-icons";
-import { mainNav } from "@/lib/navigation";
+import { getMainNav } from "@/lib/navigation";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
+import type { Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { localePath } from "@/lib/i18n/routing";
+import { fill } from "@/lib/i18n/fill";
 
 const socials = [
   { label: "Facebook", href: siteConfig.social.facebook, Icon: Facebook },
@@ -18,47 +23,76 @@ const socials = [
   { label: "YouTube", href: siteConfig.social.youtube, Icon: Youtube },
 ];
 
-export function Header() {
+export function Header({ lang, dict }: { lang: Locale; dict: Dictionary }) {
   const { open } = useInquiryModal();
+  const mainNav = getMainNav(lang, dict);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background shadow-sm">
-      {/* Top utility bar */}
+      {/* Top utility bar. On mobile this carries the language switcher and the
+          two actions farmers reach for first — quote and WhatsApp. */}
       <div className="bg-brand-dark text-white">
-        <div className="container-site flex h-10 items-center justify-between gap-4 text-xs sm:text-sm">
-          <p className="hidden truncate font-medium sm:block">
-            {siteConfig.tagline} — Manufacturing since {siteConfig.foundingYear}
+        <div className="container-site flex min-h-11 items-center justify-between gap-2 py-1 text-xs sm:text-sm">
+          <p className="hidden truncate font-medium lg:block">
+            {fill(dict.common.headerTagline, {
+              tagline: dict.brand.tagline,
+              year: siteConfig.foundingYear,
+            })}
           </p>
-          <div className="flex items-center gap-1.5 sm:gap-3">
+
+          <div className="flex flex-1 items-center gap-0.5 sm:gap-2 lg:flex-none">
+            <LanguageSwitcher lang={lang} dict={dict} />
+
+            <span aria-hidden className="hidden h-4 w-px bg-white/20 sm:block" />
+
             <button
               type="button"
               onClick={open}
-              className="rounded px-2 py-1 font-semibold transition-colors hover:bg-white/10"
+              className="hidden min-h-9 rounded px-2 py-1 font-semibold transition-colors hover:bg-white/10 sm:inline-flex sm:items-center"
             >
-              Request a Quote
+              {dict.common.requestQuote}
             </button>
             <a
               href={whatsappLink()}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded px-2 py-1 font-semibold transition-colors hover:bg-white/10"
+              className="ml-auto inline-flex min-h-9 items-center gap-1.5 rounded px-2 py-1 font-semibold transition-colors hover:bg-white/10 sm:ml-0"
             >
               <MessageCircleMore className="size-4" />
-              <span className="hidden sm:inline">WhatsApp</span>
+              <span className="hidden sm:inline">{dict.common.whatsapp}</span>
             </a>
-            <SearchDialog className="rounded px-2 py-1.5 transition-colors hover:bg-white/10" />
+            <SearchDialog
+              lang={lang}
+              dict={dict}
+              className="grid min-h-9 min-w-9 place-items-center rounded transition-colors hover:bg-white/10"
+            />
           </div>
         </div>
       </div>
 
-      {/* Main bar: logo, contact blocks, socials */}
-      <div className="container-site flex items-center justify-between gap-4 py-3.5">
-        <Logo />
+      {/* Main bar: logo, contact blocks, socials, menu trigger */}
+      <div className="container-site flex items-center justify-between gap-3 py-3">
+        <Logo href={localePath(lang, "/")} tagline={dict.brand.tagline} />
 
         <div className="hidden items-stretch gap-6 xl:flex">
-          <ContactBlock Icon={Phone} label="Call Anytime" value={siteConfig.contact.phone} href={siteConfig.contact.phoneHref} />
-          <ContactBlock Icon={Mail} label="Send Email" value={siteConfig.contact.email} href={`mailto:${siteConfig.contact.email}`} />
-          <ContactBlock Icon={MapPin} label="Location" value={`${siteConfig.contact.city}, ${siteConfig.contact.state}`} href={siteConfig.contact.mapUrl} />
+          <ContactBlock
+            Icon={Phone}
+            label={dict.common.callAnytime}
+            value={siteConfig.contact.phone}
+            href={siteConfig.contact.phoneHref}
+          />
+          <ContactBlock
+            Icon={Mail}
+            label={dict.common.sendEmailLabel}
+            value={siteConfig.contact.email}
+            href={`mailto:${siteConfig.contact.email}`}
+          />
+          <ContactBlock
+            Icon={MapPin}
+            label={dict.common.location}
+            value={`${siteConfig.contact.city}, ${siteConfig.contact.state}`}
+            href={siteConfig.contact.mapUrl}
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -70,20 +104,20 @@ export function Header() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
-                className="grid size-8 place-items-center rounded-full border text-muted-foreground transition-colors hover:border-brand hover:bg-brand hover:text-white"
+                className="grid size-9 place-items-center rounded-full border text-muted-foreground transition-colors hover:border-brand hover:bg-brand hover:text-white"
               >
                 <Icon className="size-4" />
               </a>
             ))}
           </div>
-          <MobileNav />
+          <MobileNav lang={lang} dict={dict} />
         </div>
       </div>
 
       {/* Desktop navigation bar */}
       <div className="hidden border-t bg-secondary/60 lg:block">
         <div className="container-site flex items-center justify-between">
-          <nav aria-label="Primary">
+          <nav aria-label={dict.a11y.primaryNav}>
             <ul className="flex items-center">
               {mainNav.map((item) => (
                 <li key={item.label} className="group relative">
@@ -102,7 +136,7 @@ export function Header() {
                           href={item.href}
                           className="block rounded-md px-3 py-2 text-sm font-semibold text-brand hover:bg-accent"
                         >
-                          All {item.label}
+                          {fill(dict.nav.allOf, { label: item.label })}
                         </Link>
                         {item.children.map((child) => (
                           <Link
@@ -128,8 +162,8 @@ export function Header() {
             </ul>
           </nav>
 
-          <Button render={<Link href="/contact" />} size="sm" className="my-2">
-            Get a Quote
+          <Button render={<Link href={localePath(lang, "/contact")} />} size="sm" className="my-2">
+            {dict.common.getQuote}
           </Button>
         </div>
       </div>

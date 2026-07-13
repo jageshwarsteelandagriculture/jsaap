@@ -7,9 +7,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-body);
   --font-mono: var(--font-mono);
-  --font-heading: var(--font-heading);
+  --font-heading: var(--font-display);
 
   /* Brand tokens (deep agricultural green) */
   --color-brand: var(--brand);
@@ -61,6 +61,12 @@
 :root {
   --radius: 0.5rem;
 
+  /* Latin default. Inter and Poppins have no Devanagari or Gujarati glyphs, so
+     the two rules below swap in Noto for those scripts — otherwise the browser
+     falls back to an arbitrary system font and the page looks broken. */
+  --font-body: var(--font-latin);
+  --font-display: var(--font-latin-heading);
+
   --background: #ffffff;
   --foreground: #2b2f33;
 
@@ -102,6 +108,18 @@
   --sidebar-accent-foreground: #1b5e20;
   --sidebar-border: #e4e8e3;
   --sidebar-ring: #2e7d32;
+}
+
+/* Attribute selectors outrank the next/font variable class on <html>, so these
+   win for Hindi and Gujarati without !important. */
+html[lang="hi"] {
+  --font-body: var(--font-devanagari);
+  --font-display: var(--font-devanagari);
+}
+
+html[lang="gu"] {
+  --font-body: var(--font-gujarati);
+  --font-display: var(--font-gujarati);
 }
 
 .dark {
@@ -156,6 +174,12 @@
   }
   html {
     @apply font-sans scroll-smooth;
+    /* A single overflowing child must never make the whole page pan sideways. */
+    overflow-x: hidden;
+  }
+  /* Long unbroken strings (emails, URLs) are the usual culprit on narrow phones. */
+  body {
+    overflow-wrap: break-word;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading text-heading tracking-tight;
@@ -163,9 +187,11 @@
 }
 
 @layer components {
-  /* Centered content container ~1200px */
+  /* Centered content container. Scales with the viewport so large desktop
+     monitors are actually used, instead of stranding the site in a 1200px
+     column with wide empty gutters. Capped so line lengths stay readable. */
   .container-site {
-    @apply mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8;
+    @apply mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 xl:px-10 2xl:max-w-[1680px];
   }
   /* Small green eyebrow label above headings */
   .eyebrow {
@@ -175,8 +201,9 @@
     content: "";
     @apply inline-block h-px w-8 bg-brand;
   }
-  /* Section vertical rhythm */
+  /* Section vertical rhythm — tighter on phones, where long scrolls of padding
+     push real content below the fold. */
   .section {
-    @apply py-16 md:py-20 lg:py-24;
+    @apply py-12 sm:py-16 md:py-20 lg:py-24;
   }
 }

@@ -1,35 +1,60 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/site-config";
-import { products, blogPosts } from "@/lib/data";
+import { productMeta, blogMeta } from "@/lib/data";
+import { locales, localeMeta } from "@/lib/i18n/config";
+import { localePath } from "@/lib/i18n/routing";
 
+type Entry = {
+  path: string;
+  changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"];
+  priority: number;
+  lastModified?: Date;
+};
+
+/**
+ * Every page is emitted once per locale, each entry carrying `alternates` so
+ * Google knows `/en/products`, `/hi/products` and `/gu/products` are the same
+ * page in three languages.
+ */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = siteConfig.url;
   const now = new Date();
 
-  const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${base}/`, lastModified: now, changeFrequency: "weekly", priority: 1 },
-    { url: `${base}/products`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${base}/company/about`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${base}/become-a-dealer`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
-    { url: `${base}/news`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${base}/contact`, lastModified: now, changeFrequency: "yearly", priority: 0.6 },
-    { url: `${base}/careers`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${base}/privacy-policy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+  const entries: Entry[] = [
+    { path: "/", changeFrequency: "weekly", priority: 1 },
+    { path: "/products", changeFrequency: "weekly", priority: 0.9 },
+    { path: "/company/about", changeFrequency: "monthly", priority: 0.7 },
+    { path: "/become-a-dealer", changeFrequency: "monthly", priority: 0.7 },
+    { path: "/news", changeFrequency: "weekly", priority: 0.7 },
+    { path: "/contact", changeFrequency: "yearly", priority: 0.6 },
+    { path: "/careers", changeFrequency: "monthly", priority: 0.5 },
+    { path: "/privacy-policy", changeFrequency: "yearly", priority: 0.3 },
+    ...productMeta.map<Entry>((p) => ({
+      path: `/products/${p.slug}`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    })),
+    ...blogMeta.map<Entry>((p) => ({
+      path: `/news/${p.slug}`,
+      changeFrequency: "yearly",
+      priority: 0.6,
+      lastModified: new Date(p.date),
+    })),
   ];
 
-  const productRoutes: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${base}/products/${p.slug}`,
-    lastModified: now,
-    changeFrequency: "monthly",
-    priority: 0.8,
-  }));
-
-  const blogRoutes: MetadataRoute.Sitemap = blogPosts.map((p) => ({
-    url: `${base}/news/${p.slug}`,
-    lastModified: new Date(p.date),
-    changeFrequency: "yearly",
-    priority: 0.6,
-  }));
-
-  return [...staticRoutes, ...productRoutes, ...blogRoutes];
+  return entries.flatMap((entry) =>
+    locales.map((lang) => ({
+      url: `${siteConfig.url}${localePath(lang, entry.path)}`,
+      lastModified: entry.lastModified ?? now,
+      changeFrequency: entry.changeFrequency,
+      priority: entry.priority,
+      alternates: {
+        languages: Object.fromEntries(
+          locales.map((l) => [
+            localeMeta[l].intl,
+            `${siteConfig.url}${localePath(l, entry.path)}`,
+          ]),
+        ),
+      },
+    })),
+  );
 }
